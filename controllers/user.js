@@ -1,5 +1,6 @@
 const User=require("../models/user");
 const bcrypt=require("bcrypt");
+const jwt=require("jsonwebtoken")
 
 const registerUser=async(req,res)=>{
     try{
@@ -14,7 +15,7 @@ const registerUser=async(req,res)=>{
         {
             return res
                     .status(409)
-                    .josn({errorMessage:"User already exits"});
+                    .json({errorMessage:"User already exits"});
         }
 
     const hashedPassword=await bcrypt.hash(password,10);
@@ -57,10 +58,16 @@ const loginUser=async(req,res)=>{
                      .status(401)
                      .json({errorMessage:"INvalid Credentials"})
          }
-         res.json({message:"User Logged in" })
+ 
+         const token=jwt.sign({userId:userDetails._id, name:userDetails.name},
+            process.env.SECRET_KEY,{expiresIn:"60s"});
+         console.log(token);
 
-
-
+         res.json({
+            message:"User Logged in" ,
+          token:token,
+          name:userDetails.name,}
+         )
     }
     catch(error)
     {
