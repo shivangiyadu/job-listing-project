@@ -1,3 +1,4 @@
+
 const User=require("../models/user");
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken")
@@ -33,47 +34,53 @@ const registerUser=async(req,res)=>{
         res.status(500).json({errorMessage:"Something went wrong"});
     }
 };
-const loginUser=async(req,res)=>{
-    try{
-        const{email , password}=req.body;
-        if(!email|| !password){
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
             return res.status(400).json({
-                errorMessage:"Bad Request Invalid credentials",
+                errorMessage: "Bad Request! Invalid credentials",
             });
         }
-         const userDetails=await User.findOne({email});
-         if(!userDetails){
-            return res
-            .status(401)
-            .josn({errorMessage:"Invalid Credentials "});
 
-         }
-         const passwordMatch=await bcrypt.compare(
+        const userDetails = await User.findOne({ email });
+
+        if (!userDetails) {
+            return res
+                .status(401)
+                .json({ errorMessage: "User doesn't exists" });
+        }
+
+        const passwordMatch = await bcrypt.compare(
             password,
             userDetails.password
-         );
-         if(!passwordMatch)
-         {
-            return res 
-                     .status(401)
-                     .json({errorMessage:"INvalid Credentials"})
-         }
- 
-         const token=jwt.sign({userId:userDetails._id, name:userDetails.name},
-            process.env.SECRET_KEY,{expiresIn:"60s"});
-         console.log(token);
+        );
 
-         res.json({
-            message:"User Logged in" ,
-          token:token,
-          name:userDetails.name,}
-         )
-    }
-    catch(error)
-    {
-        console.log(error)
-       res.status(500).json({errorMessage:"Something went wrong !"})
-    }
-}
+        if (!passwordMatch) {
+            return res
+                .status(401)
+                .json({ errorMessage: "Invalid credentials" });
+        }
 
-module.exports={registerUser,loginUser};
+        const token = jwt.sign(
+            { userId: userDetails._id, name: userDetails.name },
+            process.env.SECRET_KEY,
+            { expiresIn: "60h" }
+        );
+
+        res.json({
+            message: "User logged in",
+            token: token,
+            name: userDetails.name,
+            userId: userDetails?._id,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ errorMessage: "Something went wrong!" });
+    }
+};
+
+module.exports = { registerUser, loginUser };
+
+
